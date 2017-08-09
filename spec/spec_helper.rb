@@ -1,5 +1,22 @@
 require "bundler/setup"
-require "opsgenie/heartbeat"
+require 'webmock/rspec'
+require 'byebug'
+require "opsgenie/heartbeat/heartbeat"
+require "opsgenie/heartbeat/config"
+
+Opsgenie::Heartbeat.configure do |c|
+  c.enabled = true
+  c.api_key = '123456'
+  c.region = 'eu-west-1'
+  c.customize = lambda do |name|
+    if c.region == 'eu-west-1'
+      name
+    else
+      "#{name}-#{c.region}"
+    end
+  end
+  c.logger = ''
+end
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
