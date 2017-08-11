@@ -8,14 +8,14 @@ Opsgenie::Heartbeat.configure do |c|
   c.enabled = true
   c.api_key = '123456'
   c.region = 'eu-west-1'
-  c.customize = lambda do |name|
+  c.name_transformer = lambda do |name|
     if c.region == 'eu-west-1'
       name
     else
       "#{name}-#{c.region}"
     end
   end
-  c.logger = ''
+  c.logger = nil
 end
 
 RSpec.configure do |config|

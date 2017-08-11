@@ -51,4 +51,42 @@ describe Opsgenie::Heartbeat do
       expect(stub).to have_been_made
     end
   end
+
+  describe 'logger' do
+    it 'raises an exception' do
+      stub = stub_request(:delete, "https://api.opsgenie.com/v2/heartbeats/dressipi")
+      .with(headers: {'Authorization': "GenieKey #{Opsgenie::Heartbeat.configuration.api_key}", "Content-Type": "application/json"})
+      .to_raise(StandardError)
+      expect do
+        Opsgenie::Heartbeat.delete('dressipi')
+      end.to raise_error(StandardError)
+      Opsgenie::Heartbeat.delete('dressipi')
+    end
+  end
+
+  describe 'name_transformer' do
+    before(:example) do
+      Opsgenie::Heartbeat.configure do |c|
+        c.enabled = true
+        c.api_key = '123456'
+        c.region = 'test_region_name'
+        c.name_transformer = lambda do |name|
+          if c.region == 'eu-west-1'
+            name
+          else
+            "#{name}-#{c.region}"
+          end
+        end
+        c.logger = nil
+      end
+    end
+    it 'transforms the right name' do
+      stub = stub_request(:delete, "https://api.opsgenie.com/v2/heartbeats/dressipi-test_region_name")
+      .with(headers: {'Authorization': "GenieKey #{Opsgenie::Heartbeat.configuration.api_key}", "Content-Type": "application/json"})
+      .and_return(status: 200, body: "", headers:{})
+
+      Opsgenie::Heartbeat.delete('dressipi')
+      expect(stub).to have_been_made
+    end
+  end
 end

@@ -2,30 +2,31 @@ require "opsgenie/heartbeat/config"
 require 'net/https'
 require 'uri'
 require 'json'
+require 'rack'
 
 module Opsgenie
   module Heartbeat
 
     def self.pulse(name)
       return unless configuration.enabled
-      name = configuration.customize.call(name)
+      name = configuration.name_transformer.call(name)
       begin
-        uri = URI.parse("https://api.opsgenie.com/v2/heartbeats/#{name}/ping")
+        uri = URI.parse("https://api.opsgenie.com/v2/heartbeats/#{Rack::Utils.escape name}/ping")
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = true
         data = {name: name}
         http.post(uri.path, data.to_json, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
       rescue => e
-       configuration.logger.info("Exception raised during heartbeat: #{e.message} #{e.backtrace}")
+        configuration.logger.info("Exception raised during heartbeat: #{e.message} #{e.backtrace}")
       end
     end
 
     def self.ensure(name:, interval:, unit: , description:, enabled: true)
       return unless configuration.enabled
       original_name = name
-      name =  configuration.customize.call(name)
+      name =  configuration.name_transformer.call(name)
 
-      uri = URI.parse("https://api.opsgenie.com/v2/heartbeats/#{name}")
+      uri = URI.parse("https://api.opsgenie.com/v2/heartbeats/#{Rack::Utils.escape name}")
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = true
       response = http.get(uri.path)
@@ -35,7 +36,7 @@ module Opsgenie
     end
 
     def self.create(name:,description:,interval:,unit:, enabled:)
-      name = configuration.customize.call(name)
+      name = configuration.name_transformer.call(name)
 
       begin
         uri = URI.parse('https://api.opsgenie.com/v2/heartbeats')
@@ -56,16 +57,20 @@ module Opsgenie
 
     def self.delete(name)
       return unless configuration.enabled
-      name = configuration.customize.call(name)
+      name = configuration.name_transformer.call(name)
 
       begin
-        uri = URI.parse("https://api.opsgenie.com/v2/heartbeats/#{name}")
+        uri = URI.parse("https://api.opsgenie.com/v2/heartbeats/#{Rack::Utils.escape name}")
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = true
 
         http.delete(uri.path, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
       rescue => e
-        configuration.logger.info("Exception raised during heartbeat: #{e.message} #{e.backtrace}")
+        if  configuration.logger
+          configuration.logger.info("Exception raised during heartbeat: #{e.message} #{e.backtrace}")
+        else
+          "Exception raised during heartbeat: #{e.message} #{e.backtrace}"
+        end
       end
     end
   end
