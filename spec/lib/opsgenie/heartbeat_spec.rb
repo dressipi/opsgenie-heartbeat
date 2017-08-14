@@ -1,6 +1,7 @@
 require 'spec_helper'
 
 describe Opsgenie::Heartbeat do
+
   describe 'self.pulse' do
     it 'pings heartbeat request' do
       stub = stub_request(:post, "https://api.opsgenie.com/v2/heartbeats/dressipi/ping")
@@ -52,7 +53,7 @@ describe Opsgenie::Heartbeat do
     end
   end
 
-  describe 'logger' do
+  describe 'self.resolve_exception' do
     it 'raises an exception' do
       stub = stub_request(:delete, "https://api.opsgenie.com/v2/heartbeats/dressipi")
       .with(headers: {'Authorization': "GenieKey #{Opsgenie::Heartbeat.configuration.api_key}", "Content-Type": "application/json"})
@@ -60,28 +61,19 @@ describe Opsgenie::Heartbeat do
       expect do
         Opsgenie::Heartbeat.delete('dressipi')
       end.to raise_error(StandardError)
-      Opsgenie::Heartbeat.delete('dressipi')
+      expect(stub).to have_been_made
     end
   end
 
   describe 'name_transformer' do
     before(:example) do
       Opsgenie::Heartbeat.configure do |c|
-        c.enabled = true
-        c.api_key = '123456'
-        c.region = 'test_region_name'
-        c.name_transformer = lambda do |name|
-          if c.region == 'eu-west-1'
-            name
-          else
-            "#{name}-#{c.region}"
-          end
-        end
-        c.logger = nil
+        c.name_transformer = -> (name) {"#{name}-test_name"}
       end
     end
+
     it 'transforms the right name' do
-      stub = stub_request(:delete, "https://api.opsgenie.com/v2/heartbeats/dressipi-test_region_name")
+      stub = stub_request(:delete, "https://api.opsgenie.com/v2/heartbeats/dressipi-test_name")
       .with(headers: {'Authorization': "GenieKey #{Opsgenie::Heartbeat.configuration.api_key}", "Content-Type": "application/json"})
       .and_return(status: 200, body: "", headers:{})
 

@@ -7,15 +7,8 @@ require "opsgenie/heartbeat/config"
 Opsgenie::Heartbeat.configure do |c|
   c.enabled = true
   c.api_key = '123456'
-  c.region = 'eu-west-1'
-  c.name_transformer = lambda do |name|
-    if c.region == 'eu-west-1'
-      name
-    else
-      "#{name}-#{c.region}"
-    end
-  end
-  c.logger = nil
+  c.name_transformer = ->(name){name}
+  c.raise_error = 'yes'
 end
 
 RSpec.configure do |config|

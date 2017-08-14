@@ -9,7 +9,7 @@ module Opsgenie
     end
 
     class Config
-      attr_accessor :region, :enabled, :api_key, :name_transformer, :logger
+      attr_accessor :enabled, :api_key, :name_transformer, :logger, :raise_error
     end
   end
 end

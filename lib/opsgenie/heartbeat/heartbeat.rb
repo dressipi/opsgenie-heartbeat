@@ -17,7 +17,7 @@ module Opsgenie
         data = {name: name}
         http.post(uri.path, data.to_json, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
       rescue => e
-        configuration.logger.info("Exception raised during heartbeat: #{e.message} #{e.backtrace}")
+        resolve_exception e
       end
     end
 
@@ -51,7 +51,7 @@ module Opsgenie
         }
         http.post(uri.path, doc.to_json, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
       rescue => e
-        configuration.logger.info("Exception raised during heartbeat: #{e.message} #{e.backtrace}")
+        resolve_exception e
       end
     end
 
@@ -66,11 +66,15 @@ module Opsgenie
 
         http.delete(uri.path, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
       rescue => e
-        if  configuration.logger
-          configuration.logger.info("Exception raised during heartbeat: #{e.message} #{e.backtrace}")
-        else
-          "Exception raised during heartbeat: #{e.message} #{e.backtrace}"
-        end
+        resolve_exception e
+      end
+    end
+
+    def self.resolve_exception e
+      if configuration.logger
+        configuration.exception[:logger].info("Exception raised during heartbeat: #{e.message} #{e.backtrace}")
+      elsif configuration.raise_error
+        raise "Exception raised during heartbeat: #{e.message} #{e.backtrace}"
       end
     end
   end

@@ -22,6 +22,30 @@ Or install it yourself as:
 
 Ping, create or delete heartbeat requests with personalized name of heartbeat.
 
+In yours initializers folder, define new file with:
+```ruby
+  require "opsgenie/heartbeat/heartbeat"
+
+  Opsgenie::Heartbeat.configure do |config|
+    config.api_key = Rails.application.secrets.opsgenie_api
+    #define environment from which requests should be made
+    config.enabled = Rails.env.production?
+    #customized method for naming heartbeats, may provide your own method
+    config.name_transformer = lambda do |name|
+      if Rails.configuration.aws_region == 'eu-west-1'
+        name
+      else
+        "#{name}-#{config.Rails.configuration.aws_region}"
+      end
+    end
+    #handling exceptions:
+    # - if logger is provided, error is written there,
+    # - if config.raise_error = 'yes' is set (value can be anything except nil) then it raises error
+    # - if nothing id defined then it ignores error
+    config.logger = Rails.logger
+  end
+  ```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
