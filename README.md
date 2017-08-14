@@ -40,7 +40,7 @@ In yours initializers folder, define new file with:
     end
     #handling exceptions:
     # - if logger is provided, error is written there,
-    # - if config.raise_error = 'yes' is set (value can be anything except nil) then it raises error
+    # - if config.raise_error = true is set then it raises error
     # - if nothing id defined then it ignores error
     config.logger = Rails.logger
   end
