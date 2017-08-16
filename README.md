@@ -41,7 +41,7 @@ In yours initializers folder, define new file with:
     #handling exceptions:
     # - if logger is provided, error is written there,
     # - if config.raise_error = true is set then it raises error
-    # - if nothing id defined then it ignores error
+    # - if nothing is defined, then it ignores error
     config.logger = Rails.logger
   end
   ```
@@ -54,4 +54,4 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/opsgenie-heartbeat.
+Bug reports and pull requests are welcome on GitHub at https://github.com/dressipi/opsgenie-heartbeat.
