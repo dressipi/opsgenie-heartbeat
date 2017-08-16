@@ -1,7 +1,8 @@
 require 'spec_helper'
+require 'logger'
+
 
 describe Opsgenie::Heartbeat do
-
   describe 'self.pulse' do
     it 'pings heartbeat request' do
       stub = stub_request(:post, "https://api.opsgenie.com/v2/heartbeats/dressipi/ping")
@@ -53,14 +54,50 @@ describe Opsgenie::Heartbeat do
     end
   end
 
-  describe 'self.resolve_exception' do
-    it 'raises an exception' do
-      stub = stub_request(:delete, "https://api.opsgenie.com/v2/heartbeats/dressipi")
-      .with(headers: {'Authorization': "GenieKey #{Opsgenie::Heartbeat.configuration.api_key}", "Content-Type": "application/json"})
-      .to_raise(StandardError)
-      expect do
-        Opsgenie::Heartbeat.delete('dressipi')
-      end.to raise_error(StandardError)
+  describe 'handling exceptions' do
+    context 'when raise_error is set to true' do
+      before do
+        Opsgenie::Heartbeat.configure do |c|
+          c.raise_error = true
+        end
+      end
+      it 'raises an exception' do
+        stub_request(:delete, "https://api.opsgenie.com/v2/heartbeats/dressipi")
+        .with(headers: {'Authorization': "GenieKey #{Opsgenie::Heartbeat.configuration.api_key}", "Content-Type": "application/json"})
+        .to_raise(StandardError)
+        expect do
+          Opsgenie::Heartbeat.delete('dressipi')
+        end.to raise_error(StandardError)
+      end
+    end
+
+    context 'when raise_error is set to false' do
+      before do
+        Opsgenie::Heartbeat.configure do |c|
+          c.raise_error = false
+        end
+      end
+      it 'does not raise an exception' do
+        stub_request(:delete, "https://api.opsgenie.com/v2/heartbeats/dressipi")
+        .with(headers: {'Authorization': "GenieKey #{Opsgenie::Heartbeat.configuration.api_key}", "Content-Type": "application/json"})
+
+        expect do
+          Opsgenie::Heartbeat.delete('dressipi')
+        end.not_to raise_error
+      end
+    end
+
+    context 'when logger is not nil' do
+      let(:e) {Exception.new}
+      let(:logger) {
+        Opsgenie::Heartbeat.configure do |c|
+          c.logger = Logger.new(STDOUT)
+        end
+      }
+      it 'prints message in log file' do
+        expect(logger).to receive(:info).with("Exception raised during heartbeat: #{e.message} #{e.backtrace}")
+        Opsgenie::Heartbeat.resolve_exception(e)
+      end
     end
   end
 

@@ -8,8 +8,6 @@ Opsgenie::Heartbeat.configure do |c|
   c.enabled = true
   c.api_key = '123456'
   c.name_transformer = ->(name){name}
-  c.logger = nil
-  c.raise_error = true
 end
 
 RSpec.configure do |config|
