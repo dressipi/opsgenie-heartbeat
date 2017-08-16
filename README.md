@@ -1,6 +1,6 @@
 # Opsgenie::Heartbeat
 
-Use OpsGenie Heartbeat version 2 (REST API).
+Use OpsGenie Heartbeat version 2 (REST API) https://docs.opsgenie.com/docs/rest-api/heartbeat-api
 
 ## Installation
 
@@ -22,11 +22,16 @@ Or install it yourself as:
 
 Ping, create or delete heartbeat requests with personalized name of heartbeat.
 
+  <!-- Ping is used to ping defined heartbeat in OpsGenie.
+  Ensure is used to define heartbeats in OpsGenie.
+  Delete is used to delete monitored heartbeat in OpsGenie. -->
+
 In yours initializers folder, define new file with:
 ```ruby
   require "opsgenie/heartbeat/heartbeat"
 
   Opsgenie::Heartbeat.configure do |config|
+    #define opsgenie_api key in secrets.yml
     config.api_key = Rails.application.secrets.opsgenie_api
     #define environment from which requests should be made
     config.enabled = Rails.env.production?
