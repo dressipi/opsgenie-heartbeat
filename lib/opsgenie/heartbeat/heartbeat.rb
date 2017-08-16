@@ -72,9 +72,10 @@ module Opsgenie
 
     def self.resolve_exception e
       if configuration.logger
-        configuration.exception[:logger].info("Exception raised during heartbeat: #{e.message} #{e.backtrace}")
-      elsif configuration.raise_error
-        raise "Exception raised during heartbeat: #{e.message} #{e.backtrace}"
+        configuration.logger.info("Exception raised during heartbeat: #{e.message} #{e.backtrace}")
+      end
+      if configuration.raise_error
+        raise e
       end
     end
   end

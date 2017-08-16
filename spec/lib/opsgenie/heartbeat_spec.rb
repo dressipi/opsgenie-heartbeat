@@ -61,7 +61,6 @@ describe Opsgenie::Heartbeat do
       expect do
         Opsgenie::Heartbeat.delete('dressipi')
       end.to raise_error(StandardError)
-      expect(stub).to have_been_made
     end
   end
 
