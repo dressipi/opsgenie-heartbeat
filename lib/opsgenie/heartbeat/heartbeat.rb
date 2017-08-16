@@ -35,6 +35,23 @@ module Opsgenie
       end
     end
 
+    def self.delete(name)
+      return unless configuration.enabled
+      name = configuration.name_transformer.call(name)
+
+      begin
+        uri = URI.parse("https://api.opsgenie.com/v2/heartbeats/#{Rack::Utils.escape name}")
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.use_ssl = true
+
+        http.delete(uri.path, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
+      rescue => e
+        resolve_exception e
+      end
+    end
+
+    private
+    
     def self.create(name:,description:,interval:,unit:, enabled:)
       name = configuration.name_transformer.call(name)
 
@@ -50,21 +67,6 @@ module Opsgenie
           enabled: enabled
         }
         http.post(uri.path, doc.to_json, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
-      rescue => e
-        resolve_exception e
-      end
-    end
-
-    def self.delete(name)
-      return unless configuration.enabled
-      name = configuration.name_transformer.call(name)
-
-      begin
-        uri = URI.parse("https://api.opsgenie.com/v2/heartbeats/#{Rack::Utils.escape name}")
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
-
-        http.delete(uri.path, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
       rescue => e
         resolve_exception e
       end
