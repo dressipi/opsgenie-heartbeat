@@ -10,6 +10,10 @@ module Opsgenie
 
     class Config
       attr_accessor :enabled, :api_key, :name_transformer, :logger, :raise_error
+
+      def name_transformer
+        @name_transformer || ->(name){name}
+      end
     end
   end
 end

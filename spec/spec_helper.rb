@@ -7,7 +7,6 @@ require "opsgenie/heartbeat/config"
 Opsgenie::Heartbeat.configure do |c|
   c.enabled = true
   c.api_key = '123456'
-  c.name_transformer = ->(name){name}
 end
 
 RSpec.configure do |config|

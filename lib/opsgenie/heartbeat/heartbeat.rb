@@ -51,7 +51,7 @@ module Opsgenie
     end
 
     private
-    
+
     def self.create(name:,description:,interval:,unit:, enabled:)
       name = configuration.name_transformer.call(name)
 
