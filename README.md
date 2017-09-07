@@ -29,7 +29,7 @@ Ping, create or delete heartbeat requests with personalized name of heartbeat.
 
 In yours initializers folder, define new file with:
 ```ruby
-  require "opsgenie/heartbeat/heartbeat"
+  require "opsgenie/heartbeat"
 
   Opsgenie::Heartbeat.configure do |config|
     #define opsgenie_api key in secrets.yml

@@ -1,7 +1,7 @@
 require "bundler/setup"
 require 'webmock/rspec'
 require 'byebug'
-require "opsgenie/heartbeat/heartbeat"
+require "opsgenie/heartbeat"
 require "opsgenie/heartbeat/config"
 
 Opsgenie::Heartbeat.configure do |c|
