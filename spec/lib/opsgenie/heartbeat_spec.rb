@@ -26,7 +26,7 @@ describe Opsgenie::Heartbeat do
     it 'calls create when response is not success' do
       stub = stub_request(:get, "https://api.opsgenie.com/v2/heartbeats/dressipi")
       .and_return(status: 500)
-      expect(Opsgenie::Heartbeat).to receive(:create).with(name:'dressipi', description:'test', interval:10, unit:'minutes', enabled: true)
+      expect(Opsgenie::Heartbeat).to receive(:create).with(name:'dressipi', description:'test', interval:10, unit:'minutes', enabled: true, team: nil)
       Opsgenie::Heartbeat.ensure(name:'dressipi', interval:10, unit:'minutes', description:'test', enabled: true)
       expect(stub).to have_been_requested
     end
@@ -39,6 +39,17 @@ describe Opsgenie::Heartbeat do
       .and_return(status: 200, body: "", headers:{})
 
       Opsgenie::Heartbeat.create(name:'dressipi', description:'test', interval:10, unit:'minutes', enabled: true)
+      expect(stub).to have_been_made
+    end
+  end
+
+  describe 'self.update' do
+    it 'updates the heartbeat with specified parameters' do
+      stub = stub_request(:patch, "https://api.opsgenie.com/v2/heartbeats")
+      .with(body:{ name:'dressipi', ownerTeam: {name: 'someteam'}}, headers: {'Authorization': "GenieKey #{Opsgenie::Heartbeat.configuration.api_key}", "Content-Type": "application/json"})
+      .and_return(status: 200, body: "", headers:{})
+
+      Opsgenie::Heartbeat.update(name:'dressipi', team: {name: 'someteam'})
       expect(stub).to have_been_made
     end
   end

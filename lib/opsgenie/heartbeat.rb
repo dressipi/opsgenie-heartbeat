@@ -6,75 +6,96 @@ require 'rack'
 
 module Opsgenie
   module Heartbeat
+    class << self
+      def pulse(name)
+        return unless configuration.enabled
+        name = configuration.name_transformer.call(name)
+        begin
+          uri = URI.parse("https://api.opsgenie.com/v2/heartbeats/#{Rack::Utils.escape name}/ping")
+          http = Net::HTTP.new(uri.host, uri.port)
+          http.use_ssl = true
+          data = {name: name}
+          http.post(uri.path, data.to_json, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
+        rescue => e
+          resolve_exception e
+        end
+      end
 
-    def self.pulse(name)
-      return unless configuration.enabled
-      name = configuration.name_transformer.call(name)
-      begin
-        uri = URI.parse("https://api.opsgenie.com/v2/heartbeats/#{Rack::Utils.escape name}/ping")
+      def ensure(name:, interval:, unit: , description:, enabled: true, team: nil)
+        return unless configuration.enabled
+        original_name = name
+        name =  configuration.name_transformer.call(name)
+
+        uri = URI.parse(url_for_resource(:get, name))
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = true
-        data = {name: name}
-        http.post(uri.path, data.to_json, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
-      rescue => e
-        resolve_exception e
+        response = http.get(uri.path)
+        unless response.is_a?(Net::HTTPSuccess)
+          create(name: original_name, description: description, interval: interval, unit: unit, enabled: enabled, team: team)
+        end
       end
-    end
 
-    def self.ensure(name:, interval:, unit: , description:, enabled: true)
-      return unless configuration.enabled
-      original_name = name
-      name =  configuration.name_transformer.call(name)
+      def delete(name)
+        return unless configuration.enabled
+        name = configuration.name_transformer.call(name)
 
-      uri = URI.parse("https://api.opsgenie.com/v2/heartbeats/#{Rack::Utils.escape name}")
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      response = http.get(uri.path)
-      unless response.is_a?(Net::HTTPSuccess)
-        create(name: original_name, description: description, interval: interval, unit: unit, enabled: enabled)
+        begin
+          uri = URI.parse(url_for_resource(:delete, name))
+          http = Net::HTTP.new(uri.host, uri.port)
+          http.use_ssl = true
+
+          http.delete(uri.path, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
+        rescue => e
+          resolve_exception e
+        end
       end
-    end
 
-    def self.delete(name)
-      return unless configuration.enabled
-      name = configuration.name_transformer.call(name)
-
-      begin
-        uri = URI.parse("https://api.opsgenie.com/v2/heartbeats/#{Rack::Utils.escape name}")
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
-
-        http.delete(uri.path, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
-      rescue => e
-        resolve_exception e
+      def update(name:, interval: nil, unit: nil, description: nil, enabled: nil, team: nil)
+        return unless configuration.enabled
+        create_or_update(:patch, name: name, description: description, interval: interval, unit: unit, enabled: enabled, team: team)
       end
-    end
 
-    private
-
-    def self.create(name:,description:,interval:,unit:, enabled:)
-      name = configuration.name_transformer.call(name)
-
-      begin
-        uri = URI.parse('https://api.opsgenie.com/v2/heartbeats')
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
-        doc = {
-          name: name,
-          description: description,
-          interval: interval,
-          intervalUnit: unit,
-          enabled: enabled
-        }
-        http.post(uri.path, doc.to_json, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
-      rescue => e
-        resolve_exception e
+      def create(name:, interval: nil, unit: nil, description: nil, enabled: nil, team: nil)
+        return unless configuration.enabled
+        create_or_update(:post, name: name, description: description, interval: interval, unit: unit, enabled: enabled, team: team)
       end
-    end
 
-    def self.resolve_exception e
-      configuration.logger.info("Exception raised during heartbeat: #{e.message} #{e.backtrace}") if configuration.logger
-      raise if configuration.raise_error
+
+      private
+
+      def url_for_resource(verb, name)
+        if verb == :post
+          'https://api.opsgenie.com/v2/heartbeats'
+        else
+          "https://api.opsgenie.com/v2/heartbeats/#{Rack::Utils.escape name}"
+        end
+      end
+
+      def create_or_update(verb, name:,description:,interval:,unit:, enabled:, team:)
+        name = configuration.name_transformer.call(name)
+
+        begin
+          uri = URI.parse(url_for_resource(verb, name))
+          http = Net::HTTP.new(uri.host, uri.port)
+          http.use_ssl = true
+          doc = {
+            name: name,
+            description: description,
+            interval: interval,
+            intervalUnit: unit,
+            enabled: enabled,
+            ownerTeam: team
+          }.reject {|_, value| value.nil?}
+          http.public_send(verb, uri.path, doc.to_json, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
+        rescue => e
+          resolve_exception e
+        end
+      end
+
+      def resolve_exception e
+        configuration.logger.info("Exception raised during heartbeat: #{e.message} #{e.backtrace}") if configuration.logger
+        raise if configuration.raise_error
+      end
     end
   end
 end
