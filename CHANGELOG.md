@@ -1,3 +1,7 @@
+## Updates in version 0.2.1:
+- fix ensure always trying to create heartbeat
+- use get instead of post for pinging
+
 ## Updates in version 0.2.0:
 
 - Allow updating of heartbeats
