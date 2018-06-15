@@ -15,7 +15,11 @@ module Opsgenie
           http = Net::HTTP.new(uri.host, uri.port)
           http.use_ssl = true
           data = {name: name}
-          http.post(uri.path, data.to_json, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
+          response = http.post(uri.path, data.to_json, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
+          if !response.is_a?(Net::HTTPSuccess)
+            configuration.logger.info("Error creating or updating heartbeat: #{response}") if configuration.logger
+          end
+
         rescue => e
           resolve_exception e
         end
@@ -86,7 +90,12 @@ module Opsgenie
             enabled: enabled,
             ownerTeam: team
           }.reject {|_, value| value.nil?}
-          http.public_send(verb, uri.path, doc.to_json, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
+          response = http.public_send(verb, uri.path, doc.to_json, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
+
+          if !response.is_a?(Net::HTTPSuccess)
+            configuration.logger.info("Error creating or updating heartbeat: #{response}") if configuration.logger
+          end
+
         rescue => e
           resolve_exception e
         end
