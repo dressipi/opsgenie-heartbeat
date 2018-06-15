@@ -14,8 +14,7 @@ module Opsgenie
           uri = URI.parse("https://api.opsgenie.com/v2/heartbeats/#{Rack::Utils.escape name}/ping")
           http = Net::HTTP.new(uri.host, uri.port)
           http.use_ssl = true
-          data = {name: name}
-          response = http.post(uri.path, data.to_json, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
+          response = http.get(uri.path, {'Authorization': "GenieKey #{configuration.api_key}"})
           if !response.is_a?(Net::HTTPSuccess)
             configuration.logger.info("Error creating or updating heartbeat: #{response}") if configuration.logger
           end
