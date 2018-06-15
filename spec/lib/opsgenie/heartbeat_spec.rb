@@ -119,6 +119,12 @@ describe Opsgenie::Heartbeat do
       end
     end
 
+    after(:example) do
+      Opsgenie::Heartbeat.configure do |c|
+        c.name_transformer = nil
+      end
+    end
+
     it 'transforms the right name' do
       stub = stub_request(:delete, "https://api.opsgenie.com/v2/heartbeats/dressipi-test_name")
       .with(headers: {'Authorization': "GenieKey #{Opsgenie::Heartbeat.configuration.api_key}", "Content-Type": "application/json"})
@@ -127,5 +133,48 @@ describe Opsgenie::Heartbeat do
       Opsgenie::Heartbeat.delete('dressipi')
       expect(stub).to have_been_made
     end
+  end
+
+  describe 'default team' do
+
+    before(:example) do
+      Opsgenie::Heartbeat.configure do |c|
+        c.default_team = 'a_team'
+      end
+    end
+
+    after(:example) do
+      Opsgenie::Heartbeat.configure do |c|
+        c.default_team = nil
+      end
+    end
+
+    it 'defaults to the configured team' do
+      stub = stub_request(:post, "https://api.opsgenie.com/v2/heartbeats")
+        .with(body:{ name:'dressipi', ownerTeam: 'a_team', description:'test', interval:10, intervalUnit:'minutes', enabled: true})
+        .and_return(status: 200, body: "", headers:{})
+
+      Opsgenie::Heartbeat.create(name:'dressipi', description:'test', interval:10, unit:'minutes', enabled: true)
+      expect(stub).to have_been_made
+    end
+
+    it 'allows overrides of the team' do
+      stub = stub_request(:post, "https://api.opsgenie.com/v2/heartbeats")
+        .with(body:{ name:'dressipi', ownerTeam: 'newteam', description:'test', interval:10, intervalUnit:'minutes', enabled: true})
+        .and_return(status: 200, body: "", headers:{})
+
+      Opsgenie::Heartbeat.create(name:'dressipi', description:'test', interval:10, unit:'minutes', enabled: true, team: 'newteam')
+      expect(stub).to have_been_made
+    end
+
+    it 'allows suppressing the team' do
+      stub = stub_request(:post, "https://api.opsgenie.com/v2/heartbeats")
+        .with(body:{ name:'dressipi', description:'test', interval:10, intervalUnit:'minutes', enabled: true})
+        .and_return(status: 200, body: "", headers:{})
+
+      Opsgenie::Heartbeat.create(name:'dressipi', description:'test', interval:10, unit:'minutes', enabled: true, team: false)
+      expect(stub).to have_been_made
+    end
+
   end
 end

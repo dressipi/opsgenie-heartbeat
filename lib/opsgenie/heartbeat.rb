@@ -81,13 +81,19 @@ module Opsgenie
           uri = URI.parse(url_for_resource(verb, name))
           http = Net::HTTP.new(uri.host, uri.port)
           http.use_ssl = true
+          team_to_assign = case team
+          when nil then configuration.default_team
+          when false then nil
+          else
+            team
+          end
           doc = {
             name: name,
             description: description,
             interval: interval,
             intervalUnit: unit,
             enabled: enabled,
-            ownerTeam: team
+            ownerTeam: team_to_assign
           }.reject {|_, value| value.nil?}
           response = http.public_send(verb, uri.path, doc.to_json, {'Authorization': "GenieKey #{configuration.api_key}", "Content-Type": "application/json"})
 
