@@ -33,7 +33,7 @@ module Opsgenie
         uri = URI.parse(url_for_resource(:get, name))
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = true
-        response = http.get(uri.path)
+        response = http.get(uri.path, {'Authorization': "GenieKey #{configuration.api_key}"})
         unless response.is_a?(Net::HTTPSuccess)
           create(name: original_name, description: description, interval: interval, unit: unit, enabled: enabled, team: team)
         end
