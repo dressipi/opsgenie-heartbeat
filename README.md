@@ -49,6 +49,10 @@ In yours initializers folder, define new file with:
     # - if config.raise_error = true is set then it raises error
     # - if nothing is defined, then it ignores error
     config.logger = Rails.logger
+
+    #will set the team to Myteam on all new heartbeats
+    #you can override when you create the heartbeat.
+    config.default_team = 'Myteam'
   end
   ```
 
