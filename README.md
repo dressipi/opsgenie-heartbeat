@@ -53,6 +53,10 @@ In yours initializers folder, define new file with:
     #will set the team to Myteam on all new heartbeats
     #you can override when you create the heartbeat.
     config.default_team = 'Myteam'
+
+    #retry timedout api calls upto the specified number of times, with a random backoff
+    #default is no retries
+    config.retries = 2
   end
   ```
 

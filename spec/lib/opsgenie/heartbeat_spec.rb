@@ -135,6 +135,46 @@ describe Opsgenie::Heartbeat do
     end
   end
 
+  describe 'retrying of timeouts' do
+    before(:example) do
+      Opsgenie::Heartbeat.configure do |c|
+        c.retries = 2
+        c.raise_error = true
+        c.logger.level = Logger::FATAL
+      end
+    end
+
+    after(:example) do
+      Opsgenie::Heartbeat.configure do |c|
+        c.retries = nil
+        c.raise_error = false
+        c.logger.level = Logger::INFO
+      end
+    end
+
+
+    it 'retries the request up to the specified number of times' do
+      stub = stub_request(:get, "https://api.opsgenie.com/v2/heartbeats/dressipi/ping")
+      .with(headers: {'Authorization': "GenieKey 123456"})
+      .to_timeout.then
+      .to_timeout.then
+      .and_return(status: 200, body: "", headers:{})
+
+      Opsgenie::Heartbeat.pulse('dressipi')
+      expect(stub).to have_been_made.times(3)
+    end
+
+    it 'gives up after max retries' do
+      stub = stub_request(:get, "https://api.opsgenie.com/v2/heartbeats/dressipi/ping")
+      .with(headers: {'Authorization': "GenieKey 123456"})
+      .to_timeout
+
+      expect { Opsgenie::Heartbeat.pulse('dressipi') }.to raise_error(Net::OpenTimeout)
+      expect(stub).to have_been_made.times(3)
+    end
+
+  end
+
   describe 'default team' do
 
     before(:example) do

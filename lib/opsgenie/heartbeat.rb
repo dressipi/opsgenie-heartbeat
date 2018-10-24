@@ -12,13 +12,14 @@ module Opsgenie
         name = configuration.name_transformer.call(name)
         begin
           uri = URI.parse("https://api.opsgenie.com/v2/heartbeats/#{Rack::Utils.escape name}/ping")
-          http = Net::HTTP.new(uri.host, uri.port)
-          http.use_ssl = true
-          response = http.get(uri.path, {'Authorization': "GenieKey #{configuration.api_key}"})
-          if !response.is_a?(Net::HTTPSuccess)
-            configuration.logger.info("Error creating or updating heartbeat: #{response}") if configuration.logger
+          with_timeout_retries do
+            http = Net::HTTP.new(uri.host, uri.port)
+            http.use_ssl = true
+            response = http.get(uri.path, {'Authorization': "GenieKey #{configuration.api_key}"})
+            if !response.is_a?(Net::HTTPSuccess)
+              configuration.logger.info("Error creating or updating heartbeat: #{response}") if configuration.logger
+            end
           end
-
         rescue => e
           resolve_exception e
         end
@@ -30,11 +31,13 @@ module Opsgenie
         name =  configuration.name_transformer.call(name)
 
         uri = URI.parse(url_for_resource(:get, name))
-        http = Net::HTTP.new(uri.host, uri.port)
-        http.use_ssl = true
-        response = http.get(uri.path, {'Authorization': "GenieKey #{configuration.api_key}"})
-        unless response.is_a?(Net::HTTPSuccess)
-          create(name: original_name, description: description, interval: interval, unit: unit, enabled: enabled, team: team)
+        with_timeout_retries do
+          http = Net::HTTP.new(uri.host, uri.port)
+          http.use_ssl = true
+          response = http.get(uri.path, {'Authorization': "GenieKey #{configuration.api_key}"})
+          unless response.is_a?(Net::HTTPSuccess)
+            create(name: original_name, description: description, interval: interval, unit: unit, enabled: enabled, team: team)
+          end
         end
       end
 
@@ -65,6 +68,24 @@ module Opsgenie
 
 
       private
+
+      def with_timeout_retries
+        attempts = 0
+        begin
+          yield
+        rescue Net::OpenTimeout, Net::ReadTimeout => e
+          if attempts < (configuration.retries || 0)
+            configuration.logger.info("Retrying opsgenie api call after timeout #{e.message}")
+            attempts += 1
+            sleep(rand(2**attempts))
+            retry
+          else
+            raise
+          end
+        end
+      end
+
+
 
       def url_for_resource(verb, name)
         if verb == :post

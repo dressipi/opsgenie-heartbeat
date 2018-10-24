@@ -9,7 +9,7 @@ module Opsgenie
     end
 
     class Config
-      attr_accessor :enabled, :api_key, :name_transformer, :logger, :raise_error, :default_team
+      attr_accessor :enabled, :api_key, :name_transformer, :logger, :raise_error, :default_team, :retries
 
       def name_transformer
         @name_transformer || ->(name){name}
