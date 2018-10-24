@@ -1,3 +1,6 @@
+## Updates in version 0.4:
+- ability to configure retries
+
 ## Updates in version 0.3:
 - ability to configure a default team
 
